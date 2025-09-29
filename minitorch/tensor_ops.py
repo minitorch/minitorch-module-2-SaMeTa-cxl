@@ -8,6 +8,7 @@ from typing_extensions import Protocol
 from . import operators
 from .tensor_data import (
     MAX_DIMS,
+    OutIndex,
     broadcast_index,
     index_to_position,
     shape_broadcast,
@@ -269,7 +270,16 @@ def tensor_map(fn: Callable[[float], float]) -> Any:
         in_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 2.3.
-        raise NotImplementedError("Need to implement for Task 2.3")
+        # raise NotImplementedError("Need to implement for Task 2.3")
+        for i in range(len(out)):
+            index = OutIndex(len(out_shape))
+            # 先一一映射到index，再一一映射回position，可以确保position到position的映射也是一一映射
+            to_index(i, out_shape, index)
+            pos_out: int = index_to_position(index, out_strides)
+            if (out_shape != in_shape).any() or len(out_shape) != len(in_shape):
+                broadcast_index(index, out_shape, in_shape, index)
+            pos_in: int = index_to_position(index, in_strides)
+            out[pos_out] = fn(in_storage[pos_in])
 
     return _map
 
@@ -319,7 +329,27 @@ def tensor_zip(fn: Callable[[float, float], float]) -> Any:
         b_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 2.3.
-        raise NotImplementedError("Need to implement for Task 2.3")
+        # raise NotImplementedError("Need to implement for Task 2.3")
+        for i in range(len(out)):
+            index = OutIndex(len(out_shape))
+            index_a = OutIndex(len(a_shape))
+            index_b = OutIndex(len(b_shape))
+            # 先一一映射到index，再一一映射回position，可以确保position到position的映射也是一一映射
+            to_index(i, out_shape, index)
+            pos_out: int = index_to_position(index, out_strides)
+
+            if len(a_shape) == len(out_shape) and (a_shape == out_shape).all():
+                index_a = index
+            else:
+                broadcast_index(index, out_shape, a_shape, index_a)
+            if len(b_shape) == len(out_shape) and (b_shape == out_shape).all():
+                index_b = index
+            else:
+                broadcast_index(index, out_shape, b_shape, index_b)
+            
+            pos_a: int = index_to_position(index_a, a_strides)
+            pos_b: int = index_to_position(index_b, b_strides)
+            out[pos_out] = fn(a_storage[pos_a], b_storage[pos_b])
 
     return _zip
 
@@ -355,7 +385,16 @@ def tensor_reduce(fn: Callable[[float, float], float]) -> Any:
         reduce_dim: int,
     ) -> None:
         # TODO: Implement for Task 2.3.
-        raise NotImplementedError("Need to implement for Task 2.3")
+        # raise NotImplementedError("Need to implement for Task 2.3")
+        for i in range(len(a_storage)):
+            index = OutIndex(len(a_shape))
+            # 先一一映射到index，再一一映射回position，可以确保position到position的映射也是一一映射
+            to_index(i, a_shape, index)
+            pos_a: int = index_to_position(index, a_strides)
+            index[reduce_dim] = 0
+            pos_out: int = index_to_position(index, out_strides)
+
+            out[pos_out] = fn(out[pos_out], a_storage[pos_a])
 
     return _reduce
 

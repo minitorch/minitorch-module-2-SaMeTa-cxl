@@ -86,6 +86,7 @@ class Tensor:
         assert isinstance(v, TensorData)
         assert backend is not None
         self._tensor = v
+        self.num_output = 0
         self.history = back
         self.backend = backend
         self.grad = None
@@ -328,7 +329,7 @@ class Tensor:
         Args:
             x : value to be accumulated
         """
-        assert self.is_leaf(), "Only leaf variables can have derivatives."
+        # assert self.is_leaf(), "Only leaf variables can have derivatives."
         if self.grad is None:
             self.grad = Tensor.make(
                 [0] * int(operators.prod(self.shape)), self.shape, backend=self.backend
@@ -364,6 +365,8 @@ class Tensor:
         if grad_output is None:
             assert self.shape == (1,), "Must provide grad_output if non-scalar"
             grad_output = Tensor.make([1.0], (1,), backend=self.backend)
+        # print(f"grad_output: {grad_output}")
+        # input("Enter...")
         backpropagate(self, grad_output)
 
     def zero_grad_(self) -> None:  # pragma: no cover
