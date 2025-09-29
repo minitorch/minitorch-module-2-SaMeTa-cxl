@@ -3,7 +3,9 @@ Be sure you have minitorch installed in you Virtual Env.
 >>> pip install -Ue .
 """
 
+# from ..minitorch import Tensor
 import minitorch
+from minitorch import Tensor
 
 
 def RParam(*shape):
@@ -22,7 +24,16 @@ class Network(minitorch.Module):
 
     def forward(self, x):
         # TODO: Implement for Task 2.5.
-        raise NotImplementedError("Need to implement for Task 2.5")
+        # raise NotImplementedError("Need to implement for Task 2.5")
+
+        hidden1 = self.layer1.forward(x)
+        act1 = hidden1.relu()
+        hidden2 = self.layer2.forward(act1)
+        act2 = hidden2.relu()
+        hidden3 = self.layer3.forward(act2)
+        result = hidden3.sigmoid()
+
+        return result
 
 
 class Linear(minitorch.Module):
@@ -31,10 +42,25 @@ class Linear(minitorch.Module):
         self.weights = RParam(in_size, out_size)
         self.bias = RParam(out_size)
         self.out_size = out_size
+        self.in_size = in_size
 
-    def forward(self, x):
+    def forward(self, x) -> Tensor:
         # TODO: Implement for Task 2.5.
-        raise NotImplementedError("Need to implement for Task 2.5")
+        # raise NotImplementedError("Need to implement for Task 2.5")
+        weights_tensor: Tensor = self.weights.value
+        bias_tensor: Tensor = self.bias.value
+        result = Tensor.make(bias_tensor._tensor._storage, bias_tensor.shape, backend=weights_tensor.f)
+
+        # x from (batch, input_size) to (batch, input_size, 1)
+        # weight (input_size, output_size)
+        # broadcast to (batch, input_size, output_size)
+        batch = x.shape[0]
+        x = x.view(batch, self.in_size, 1)
+
+        # element-wise multiply and then sum on input_size dim
+        # lastly, broad cast to (batch, out_size) and add bias_tensor
+        result = (weights_tensor * x).sum(1).view(batch, self.out_size) + bias_tensor
+        return result
 
 
 def default_log_fn(epoch, total_loss, correct, losses):
@@ -90,6 +116,6 @@ class TensorTrain:
 if __name__ == "__main__":
     PTS = 50
     HIDDEN = 2
-    RATE = 0.5
+    RATE = 0.7
     data = minitorch.datasets["Simple"](PTS)
     TensorTrain(HIDDEN).train(data, RATE)

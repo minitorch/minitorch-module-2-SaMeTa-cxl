@@ -44,6 +44,7 @@ def render_math_sandbox(use_scalar=False, use_tensor=False):
             st.write("Derivative f'(x)")
             if use_tensor:
                 x_var = [minitorch.tensor(x, requires_grad=True) for x in xs]
+                print(x_var)
             else:
                 x_var = [minitorch.Scalar(x) for x in xs]
             for x in x_var:
@@ -53,6 +54,7 @@ def render_math_sandbox(use_scalar=False, use_tensor=False):
                 else:
                     out.backward()
             if use_tensor:
+                # print(x_var[0].grad)
                 scatter = go.Scatter(mode="lines", x=xs, y=[x.grad[0] for x in x_var])
             else:
                 scatter = go.Scatter(
